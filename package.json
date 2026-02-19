@@ -13,7 +13,13 @@
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist --target node",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "bun run build && changeset publish"
   },
   "keywords": [
     "cli",
@@ -31,5 +37,6 @@
   },
   "dependencies": {
     "picocolors": "^1.1.1"
-  }
+  },
+  "packageManager": "bun@1.2.0"
 }
