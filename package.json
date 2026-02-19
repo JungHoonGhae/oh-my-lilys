@@ -38,5 +38,14 @@
   "dependencies": {
     "picocolors": "^1.1.1"
   },
-  "packageManager": "bun@1.2.0"
+  "packageManager": "bun@1.2.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JungHoonGhae/oh-my-lilys.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JungHoonGhae/oh-my-lilys/issues"
+  },
+  "homepage": "https://github.com/JungHoonGhae/oh-my-lilys#readme"
 }
