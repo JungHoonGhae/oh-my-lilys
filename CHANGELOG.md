@@ -9,15 +9,21 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `auth` command (replaces `login`)
 - Skill for AI agents (oh-my-lilys)
-- FUNDING.json
+- `.github/FUNDING.yml` for sponsorship
 - GitHub Actions CI workflow
+- GitHub Actions publish workflow (npm + GitHub Release)
 - Changesets for version management
 
 ### Changed
 - Login methods display: Google (available), Naver/Email (coming soon)
+- Replaced deprecated `actions/create-release@v1` with `softprops/action-gh-release@v2`
 
 ### Fixed
-- Various bug fixes
+- GitHub Release now creates even if npm publish fails
+- Proper `contents: write` permission for release creation
+
+### Removed
+- `FUNDING.json` (replaced with `.github/FUNDING.yml`)
 
 ## [1.0.0-beta.1] - 2026-02-19
 
