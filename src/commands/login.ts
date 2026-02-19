@@ -1,13 +1,12 @@
 import { setToken } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
 
-export async function login(tokenFromArg?: string) {
+export async function auth(tokenFromArg?: string) {
   logger.warn("=".repeat(50));
   logger.warn("⚠️  oh-my-lilys is currently in BETA");
   logger.warn("=".repeat(50));
   logger.dim("");
   logger.dim("This tool reverse-engineers the lilys.ai API.");
-  logger.dim("Login methods (Naver, Email) are not yet fully implemented.");
   logger.dim("Use at your own risk.");
   logger.dim("");
   logger.warn("⚠️  DISCLAIMER:");
@@ -26,18 +25,18 @@ export async function login(tokenFromArg?: string) {
 
   logger.info("Available login methods:");
   logger.dim("");
-  logger.dim("  1. Continue with Naver");
-  logger.dim("  2. Continue with Email");
-  logger.dim("  3. Manual token input (advanced)");
+  logger.dim("  1. Google     - Sign in with Google (available)");
+  logger.dim("  2. Naver      - Sign in with Naver (coming soon)");
+  logger.dim("  3. Email      - Sign in with Email (coming soon)");
+  logger.dim("  4. Manual     - Enter token manually");
   logger.dim("");
 
-  logger.warn("Note: Naver and Email login methods are not yet implemented.");
-  logger.info("Currently, you must provide a token manually.");
-  logger.dim("");
-  logger.info("To get a token manually:");
+  logger.info("To authenticate with Google:");
   logger.dim("  1. Open https://lilys.ai in your browser");
-  logger.dim("  2. Log in with Google or other provider");
+  logger.dim("  2. Log in with Google");
   logger.dim("  3. Open DevTools (F12) → Application → Local Storage");
   logger.dim("  4. Copy the 'access_token' value");
-  logger.dim("  5. Run: lilys login <token>");
+  logger.dim("  5. Run: lilys auth <token>");
+  logger.dim("");
+  logger.warn("Note: Naver and Email login are not yet implemented.");
 }

@@ -1,5 +1,5 @@
 import { clearToken } from "./utils/config.js";
-import { login } from "./commands/login.js";
+import { auth } from "./commands/login.js";
 import { summarize } from "./commands/summarize.js";
 import { sessions } from "./commands/sessions.js";
 import { report } from "./commands/report.js";
@@ -29,6 +29,11 @@ async function main() {
   await banner();
 
   switch (command) {
+    case "auth":
+    case "login":
+      const tokenArg = args[1];
+      await auth(tokenArg);
+      break;
     case "upgrade":
     case "update":
       await upgrade();
@@ -73,7 +78,7 @@ async function main() {
       if (token) {
         logger.success("Authenticated");
       } else {
-        logger.warn("Not authenticated. Run 'lilys login' first.");
+        logger.warn("Not authenticated. Run 'lilys auth' first.");
       }
       break;
     case "lang":
@@ -124,7 +129,8 @@ ${logger.bold("Usage:")}
   lilys <command> [options]
 
 ${logger.bold("Commands:")}
-  login         ${logger.dim("Authenticate with Google")}
+  auth          ${logger.dim("Authenticate (Google available, Naver/Email coming soon)")}
+  login         ${logger.dim("Alias for auth")}
   summarize     ${logger.dim("Summarize a URL (YouTube, PDF, audio, website)")}
   sessions      ${logger.dim("List your digest sessions")}
   report        ${logger.dim("Get report for a session")}
@@ -151,7 +157,7 @@ ${logger.bold("Report Options:")}
   --export markdown     ${logger.dim("Export as markdown file")}
 
 ${logger.bold("Examples:")}
-  lilys login eyJhbGci...
+  lilys auth eyJhbGci...
   lilys --version
   lilys lang
   lilys lang ko
