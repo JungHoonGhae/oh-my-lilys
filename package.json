@@ -1,0 +1,35 @@
+{
+  "name": "oh-my-lilys",
+  "version": "1.0.0-beta.1",
+  "description": "CLI tool for lilys.ai - Summarize YouTube, PDF, websites, and audio",
+  "type": "module",
+  "bin": {
+    "lilys": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist --target node",
+    "prepublishOnly": "bun run build"
+  },
+  "keywords": [
+    "cli",
+    "lilys",
+    "ai",
+    "summarizer",
+    "youtube",
+    "pdf"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "picocolors": "^1.1.1"
+  }
+}

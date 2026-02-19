@@ -1,0 +1,41 @@
+import { listSessions } from "../api/client.js";
+import { isAuthenticated } from "../utils/config.js";
+import { logger, styles } from "../utils/logger.js";
+
+export async function sessions() {
+  if (!isAuthenticated()) {
+    logger.error("Not authenticated. Run 'lilys login' first.");
+    process.exit(1);
+  }
+
+  logger.info("Fetching sessions...");
+
+  try {
+    const sessionsList = await listSessions();
+
+    if (sessionsList.length === 0) {
+      logger.warn("No sessions found.");
+      return;
+    }
+
+    logger.break();
+    logger.log(`${logger.bold("Found")} ${styles.value(String(sessionsList.length))} ${logger.bold("session(s):")}`);
+    logger.break();
+    
+    for (const session of sessionsList.slice(0, 10)) {
+      logger.log(`${styles.key(String(session.id))}`);
+      logger.dim(`  Title: ${session.title}`);
+      logger.dim(`  Type: ${session.sourceType}`);
+      logger.dim(`  Created: ${session.createdAt}`);
+      logger.log(`  ${styles.url(`https://lilys.ai/digest/${session.id}/main`)}`);
+      logger.break();
+    }
+
+    if (sessionsList.length > 10) {
+      logger.dim(`... and ${sessionsList.length - 10} more`);
+    }
+  } catch (error) {
+    logger.error("Error:", error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
+}
