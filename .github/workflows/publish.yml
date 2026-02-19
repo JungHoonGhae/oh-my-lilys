@@ -31,13 +31,16 @@ jobs:
         run: bun run tsc
 
       - name: Publish to npm
+        id: npm-publish
         uses: JS-DevTools/npm-publish@v3
+        continue-on-error: true
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
           tag: latest
 
       - name: Create GitHub Release
+        if: always()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -45,3 +48,8 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
           generate_release_notes: true
+
+      - name: Check npm publish result
+        if: steps.npm-publish.outcome == 'failure'
+        run: |
+          echo "::warning::npm publish failed - check NPM_TOKEN secret"
