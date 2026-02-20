@@ -66,12 +66,21 @@ lilys --help
 lilys -h
 ```
 
+## AI Agent Skill
+
+This CLI tool has an accompanying AI agent skill available at [JungHoonGhae/skills](https://github.com/JungHoonGhae/skills):
+
+```bash
+npx skills add JungHoonGhae/skills@oh-my-lilys
+```
+
 ## Documentation
 
 | Resource | Link |
 |----------|------|
 | npm Package | [npmjs.com/package/oh-my-lilys](https://www.npmjs.com/package/oh-my-lilys) |
 | GitHub | [github.com/JungHoonGhae/oh-my-lilys](https://github.com/JungHoonGhae/oh-my-lilys) |
+| AI Agent Skill | [JungHoonGhae/skills](https://github.com/JungHoonGhae/skills) |
 | lilys.ai | [lilys.ai](https://lilys.ai) |
 
 ## Contributing
