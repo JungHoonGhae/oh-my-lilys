@@ -1,5 +1,6 @@
 # oh-my-lilys
 
+[![skills.sh](https://skills-badge.vercel.app/badge/JungHoonGhae/skills/oh-my-lilys?style=flat-square&label=installs)](https://skills.sh/JungHoonGhae/skills/oh-my-lilys)
 [![npm version](https://img.shields.io/npm/v/oh-my-lilys.svg)](https://www.npmjs.com/package/oh-my-lilys)
 [![npm downloads](https://img.shields.io/npm/dw/oh-my-lilys.svg)](https://www.npmjs.com/package/oh-my-lilys)
 [![GitHub stars](https://img.shields.io/github/stars/JungHoonGhae/oh-my-lilys)](https://github.com/JungHoonGhae/oh-my-lilys/stargazers)
