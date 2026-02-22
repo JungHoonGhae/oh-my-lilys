@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { clearToken } from "./utils/config.js";
 import { auth } from "./commands/login.js";
 import { summarize } from "./commands/summarize.js";
