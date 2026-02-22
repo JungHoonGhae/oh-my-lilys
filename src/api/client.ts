@@ -157,21 +157,6 @@ export async function addResourceToSession(
   });
 }
 
-export async function generateNote(
-  sessionId: string,
-  noteType: string = "detailed"
-): Promise<NoteResponse> {
-  return makeRequest<NoteResponse>(`${AWS_API_BASE}/notes`, {
-    method: "POST",
-    isAWS: true,
-    queryParams: { provider: "google" },
-    body: JSON.stringify({
-      sessionId,
-      noteType,
-    }),
-  });
-}
-
 export async function getReport(
   sessionId: string,
   noteId?: string
@@ -333,4 +318,94 @@ function detectSourceType(url: string): string {
     return "audio";
   }
   return "website";
+}
+
+// Note-Tabs API (Optional - for enhanced note organization)
+// These endpoints provide tabbed view and recommended notes for sessions
+// Reference: Discovered via reverse engineering
+
+export interface NoteTab {
+  tabId: string;
+  tabName: string;
+  notes: any[];
+}
+
+/**
+ * Get recommended note tabs for a session
+ * Returns organized tabs with notes grouped by type/category
+ * 
+ * @param sessionId - Session identifier
+ * @returns Promise<NoteTab[]> - Array of note tabs with their notes
+ */
+export async function getRecommendedNoteTabs(sessionId: string): Promise<NoteTab[]> {
+  try {
+    const response = await makeRequest<{ tabs: NoteTab[] }>(
+      `${AWS_API_BASE}/recommend/note-tabs/${sessionId}`,
+      {
+        method: "GET",
+        isAWS: true,
+        queryParams: { provider: "google" },
+      }
+    );
+    return response.tabs || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Create a custom note tab
+ * Allows creating custom tab organization for notes
+ * 
+ * @param sessionId - Session identifier
+ * @param tabName - Name for the new tab
+ * @param noteIds - Array of note IDs to include in the tab
+ * @returns Promise<{ tabId: string }>
+ */
+export async function createNoteTab(
+  sessionId: string,
+  tabName: string,
+  noteIds: string[]
+): Promise<{ tabId: string }> {
+  const response = await makeRequest<{ tabId: string }>(
+    `${AWS_API_BASE}/note-tabs`,
+    {
+      method: "POST",
+      isAWS: true,
+      queryParams: { provider: "google" },
+      body: JSON.stringify({
+        sessionId,
+        tabName,
+        noteIds,
+      }),
+    }
+  );
+  
+  if (!response.tabId) {
+    throw new Error("Note tab creation failed: no tabId returned");
+  }
+  
+  return response;
+}
+
+/**
+ * Get note templates available for creating notes
+ * Returns list of templates with their types and descriptions
+ * 
+ * @returns Promise<any[]> - Array of note templates
+ */
+export async function getNoteTemplates(): Promise<any[]> {
+  try {
+    const response = await makeRequest<{ templates: any[] }>(
+      `${AWS_API_BASE}/note-templates`,
+      {
+        method: "GET",
+        isAWS: true,
+        queryParams: { provider: "google" },
+      }
+    );
+    return response.templates || [];
+  } catch {
+    return [];
+  }
 }

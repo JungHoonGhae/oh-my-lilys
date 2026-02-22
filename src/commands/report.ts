@@ -2,23 +2,68 @@ import { getReport, getNotesForSession, createNote, NOTE_TYPES, type NoteType, l
 import { isAuthenticated } from "../utils/config.js";
 import { logger, styles } from "../utils/logger.js";
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<lilys-[^>]*>/g, "")
-    .replace(/<\/lilys-[^>]*>/g, "")
-    .replace(/<[^>]+>/g, "\n")
-    .replace(/&nbsp;/g, " ")
+function htmlToMarkdown(html: string): string {
+  // Remove lilys custom tags first
+  let result = html.replace(/<\/?(lilys-[^>]*)>/g, "");
+  
+  // Decode HTML entities (order matters: decode specific entities before &amp;)
+  result = result
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
-    .replace(/\n+/g, "\n")
+    .replace(/&nbsp;/g, " ");
+  
+  // Convert structural HTML to markdown-like text format
+  // Headings
+  result = result.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1\n\n");
+  result = result.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "## $1\n\n");
+  result = result.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "### $1\n\n");
+  result = result.replace(/<h4[^>]*>(.*?)<\/h4>/gi, "#### $1\n\n");
+  result = result.replace(/<h5[^>]*>(.*?)<\/h5>/gi, "##### $1\n\n");
+  result = result.replace(/<h6[^>]*>(.*?)<\/h6>/gi, "###### $1\n\n");
+  
+  // Bold and italic
+  result = result.replace(/<strong[^>]*>(.*?)<\/strong>/gi, "**$1**");
+  result = result.replace(/<b[^>]*>(.*?)<\/b>/gi, "**$1**");
+  result = result.replace(/<em[^>]*>(.*?)<\/em>/gi, "*$1*");
+  result = result.replace(/<i[^>]*>(.*?)<\/i>/gi, "*$1*");
+  
+  // Unordered lists
+  result = result.replace(/<ul[^>]*>/gi, "");
+  result = result.replace(/<\/ul>/gi, "\n");
+  result = result.replace(/<li[^>]*>/gi, "\n• ");
+  result = result.replace(/<\/li>/gi, "");
+  
+  // Ordered lists
+  result = result.replace(/<ol[^>]*>/gi, "");
+  result = result.replace(/<\/ol>/gi, "\n");
+  // Note: numbered lists need sequential processing
+  
+  // Paragraphs and breaks
+  result = result.replace(/<p[^>]*>/gi, "\n");
+  result = result.replace(/<\/p>/gi, "\n\n");
+  result = result.replace(/<br\s*\/?>/gi, "\n");
+  
+  // Remove all remaining HTML tags
+  result = result.replace(/<[^>]+>/g, "");
+  
+  // Clean up whitespace
+  result = result
+    .replace(/\n{3,}/g, "\n\n")  // Max 2 consecutive newlines
+    .replace(/^\n+/, "")      // Remove leading newlines
+    .replace(/\n+$/, "")      // Remove trailing newlines
     .trim();
+  return result;
 }
-
+function stripHtml(html: string): string {
+  // Legacy function kept for backward compatibility
+  return htmlToMarkdown(html);
+}
 function extractTextContent(html: string): string {
-  const stripped = stripHtml(html);
-  const lines = stripped.split("\n").filter(line => line.trim().length > 0);
-  return lines.join("\n\n");
+  return htmlToMarkdown(html);
 }
 
 export interface ReportOptions {
