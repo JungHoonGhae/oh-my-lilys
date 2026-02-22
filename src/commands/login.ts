@@ -1,9 +1,24 @@
 import { setToken } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
-import { execSync } from "child_process";
-import { homedir } from "os";
-import { join } from "path";
-import { existsSync } from "fs";
+import { fetchTokenFromBrowser, closeBrowser } from "../utils/browser.js";
+
+const POLL_INTERVAL_MS = 5000;
+const MAX_POLL_DURATION_MS = 120000;
+
+async function pollForToken(): Promise<string | null> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < MAX_POLL_DURATION_MS) {
+    const token = await fetchTokenFromBrowser(false);
+    if (token) {
+      return token;
+    }
+    logger.dim(`Waiting for login... (${Math.floor((Date.now() - startTime) / 1000)}s elapsed)`);
+    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+  }
+
+  return null;
+}
 
 export async function auth(tokenFromArg?: string) {
   logger.warn("=".repeat(50));
@@ -27,43 +42,39 @@ export async function auth(tokenFromArg?: string) {
     return;
   }
 
-  // Try auto-retrieval for macOS Chrome
-  if (process.platform === "darwin") {
-    try {
-      logger.info("Attempting to automatically retrieve token from Chrome...");
-      const chromePath = join(homedir(), "Library/Application Support/Google/Chrome/Default/Local Storage/leveldb");
-      
-      if (existsSync(chromePath)) {
-        // Use a simple grep-like approach to find the token in the leveldb files
-        // This is a bit hacky but often works for local storage strings
-        const cmd = `grep -aohE 'access_token":"[^"]+"' "${chromePath}"/*.ldb "${chromePath}"/*.log 2>/dev/null | head -n 1 | sed 's/access_token":"//;s/"//'`;
-        const token = execSync(cmd).toString().trim();
-        
-        if (token && token.length > 20) {
-          setToken(token);
-          logger.success("Successfully retrieved token from Chrome automatically!");
-          return;
-        }
-      }
-    } catch (e) {
-      logger.dim("Auto-retrieval failed, falling back to manual instructions.");
-    }
+  logger.info("Attempting to retrieve token automatically...");
+
+  let token = await fetchTokenFromBrowser(true);
+
+  if (token) {
+    setToken(token);
+    logger.success("Successfully retrieved token from existing browser session!");
+    return;
   }
 
-  logger.info("Available login methods:");
-  logger.dim("");
-  logger.dim("  1. Google     - Sign in with Google (available)");
-  logger.dim("  2. Naver      - Sign in with Naver (coming soon)");
-  logger.dim("  3. Email      - Sign in with Email (coming soon)");
-  logger.dim("  4. Manual     - Enter token manually");
-  logger.dim("");
+  logger.warn("No existing login session found.");
+  logger.info("Opening browser for manual login...");
+  logger.dim("Please login with Google at https://lilys.ai");
+  logger.dim("Waiting for login (2 minutes timeout)...");
 
-  logger.info("To authenticate with Google:");
-  logger.dim("  1. Open https://lilys.ai in your browser");
-  logger.dim("  2. Log in with Google");
-  logger.dim("  3. Open DevTools (F12) → Application → Local Storage");
-  logger.dim("  4. Copy the 'access_token' value");
-  logger.dim("  5. Run: lilys auth <token>");
-  logger.dim("");
-  logger.warn("Note: Naver and Email login are not yet implemented.");
+  try {
+    token = await pollForToken();
+
+    if (token) {
+      setToken(token);
+      logger.success("Token retrieved successfully!");
+      logger.dim("Closing browser...");
+      await closeBrowser();
+      logger.success("Done!");
+    } else {
+      logger.error("Login timeout. Please try again.");
+      logger.dim("Your session was not detected within 2 minutes.");
+    }
+  } catch (error) {
+    logger.error("Error during login process:", error);
+  } finally {
+    try {
+      await closeBrowser();
+    } catch {}
+  }
 }
