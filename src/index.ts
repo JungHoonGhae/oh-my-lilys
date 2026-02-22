@@ -10,7 +10,14 @@ import { logger, banner } from "./utils/logger.js";
 import { getToken } from "./utils/config.js";
 import { NOTE_TYPES } from "./api/client.js";
 
-const VERSION = "1.0.0";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
+const VERSION = pkg.version;
 
 const args = process.argv.slice(2);
 const command = args[0] || "help";
