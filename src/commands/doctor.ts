@@ -1,8 +1,9 @@
-import { getToken, getConfig } from "../utils/config.js";
+import { existsSync, statSync } from "fs";
+
+import { getConfig, getConfigFilePath, getToken } from "../utils/config.js";
 import { getUserPreferences } from "../api/client.js";
 import { logger, styles } from "../utils/logger.js";
 
-const VERSION = "1.0.0";
 const PACKAGE_NAME = "oh-my-lilys";
 const NPM_REGISTRY = "https://registry.npmjs.org";
 
@@ -12,17 +13,20 @@ interface DoctorResult {
   message: string;
 }
 
-export async function doctor() {
+export async function doctor(currentVersion?: string) {
+  const version = currentVersion ?? "unknown";
+
   logger.log(logger.bold("oh-my-lilys Doctor"));
   logger.break();
 
   const results: DoctorResult[] = [];
 
-  results.push(await checkVersion());
+  results.push(await checkVersion(version));
   results.push(checkToken());
   results.push(checkTokenExpiry());
   results.push(await checkApiConnection());
   results.push(checkConfig());
+  results.push(checkConfigPermissions());
 
   let passCount = 0;
   let failCount = 0;
@@ -140,30 +144,81 @@ function checkTokenExpiry(): DoctorResult {
   }
 }
 
-async function checkVersion(): Promise<DoctorResult> {
+async function checkVersion(version: string): Promise<DoctorResult> {
+  if (version === "unknown") {
+    return {
+      name: "Version",
+      status: "warn",
+      message: "Current version unknown",
+    };
+  }
+
   try {
     const response = await fetch(`${NPM_REGISTRY}/${PACKAGE_NAME}/latest`);
     const data = await response.json() as { version: string };
     const latestVersion = data.version;
 
-    if (latestVersion === VERSION) {
+    if (latestVersion === version) {
       return {
         name: "Version",
         status: "pass",
-        message: `v${VERSION} (latest)`,
+        message: `v${version} (latest)`,
       };
     }
 
     return {
       name: "Version",
       status: "warn",
-      message: `v${VERSION} → v${latestVersion} available (run 'lilys upgrade')`,
+      message: `v${version} → v${latestVersion} available (run 'lilys upgrade')`,
     };
   } catch {
     return {
       name: "Version",
       status: "warn",
-      message: `v${VERSION} (could not check for updates)`,
+      message: `v${version} (could not check for updates)`,
+    };
+  }
+}
+
+function checkConfigPermissions(): DoctorResult {
+  const configFile = getConfigFilePath();
+  if (!existsSync(configFile)) {
+    return {
+      name: "Config Permissions",
+      status: "warn",
+      message: "Config file not found",
+    };
+  }
+
+  if (process.platform === "win32") {
+    return {
+      name: "Config Permissions",
+      status: "warn",
+      message: "Skipped on Windows",
+    };
+  }
+
+  try {
+    const mode = statSync(configFile).mode & 0o777;
+    if (mode !== 0o600) {
+      return {
+        name: "Config Permissions",
+        status: "warn",
+        message: `Expected 600, got ${mode.toString(8)}`,
+      };
+    }
+
+    return {
+      name: "Config Permissions",
+      status: "pass",
+      message: "Permissions are secure (600)",
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return {
+      name: "Config Permissions",
+      status: "warn",
+      message: `Could not check permissions: ${msg}`,
     };
   }
 }

@@ -1,9 +1,13 @@
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 import { homedir } from "os";
 
 const CONFIG_DIR = join(homedir(), ".lilys");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
+
+export function getConfigFilePath(): string {
+  return CONFIG_FILE;
+}
 
 interface Config {
   token?: string;
@@ -14,6 +18,14 @@ interface Config {
 function ensureConfigDir() {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
+  }
+
+  if (process.platform !== "win32") {
+    try {
+      chmodSync(CONFIG_DIR, 0o700);
+    } catch (error) {
+      void error;
+    }
   }
 }
 
@@ -33,6 +45,14 @@ function readConfig(): Config {
 function writeConfig(config: Config) {
   ensureConfigDir();
   writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+
+  if (process.platform !== "win32") {
+    try {
+      chmodSync(CONFIG_FILE, 0o600);
+    } catch (error) {
+      void error;
+    }
+  }
 }
 
 export function getConfig(): Config {
@@ -40,7 +60,7 @@ export function getConfig(): Config {
 }
 
 export function getToken(): string | undefined {
-  return readConfig().token;
+  return readConfig().token || process.env.LILYS_TOKEN;
 }
 
 export function setToken(token: string, userId?: string) {

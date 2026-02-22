@@ -1,0 +1,6 @@
+[     114ms] Uncaught TypeError: Cannot read properties of null (reading 'appendChild')
+    at C (https://c.paypal.com/da/r/fb.js:0:9863)
+    at O (https://c.paypal.com/da/r/fb.js:0:8606)
+    at <anonymous> (https://c.paypal.com/da/r/fb.js:0:72012)
+    at <anonymous> (https://c.paypal.com/da/r/fb.js:0:72046)
+    at <anonymous> (https://c.paypal.com/da/r/fb.js:0:72063)

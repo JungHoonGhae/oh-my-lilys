@@ -1,0 +1,86 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - img "toggle" [ref=e5] [cursor=pointer]
+    - generic [ref=e6]:
+      - generic [ref=e8] [cursor=pointer]:
+        - img "logo" [ref=e10]
+        - img "lilysTextLogo" [ref=e12]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - img "새 프로젝트" [ref=e15]
+          - generic [ref=e16]: 새 프로젝트
+        - img "addFolder" [ref=e18] [cursor=pointer]
+      - generic [ref=e19]:
+        - generic [ref=e21] [cursor=pointer]:
+          - img "home" [ref=e22]
+          - generic [ref=e23]: 홈
+        - generic [ref=e25] [cursor=pointer]:
+          - img "history-search" [ref=e26]
+          - generic [ref=e27]: 검색
+        - generic [ref=e29] [cursor=pointer]:
+          - img "explore" [ref=e30]
+          - generic [ref=e31]: 탐색
+        - generic [ref=e33] [cursor=pointer]:
+          - img "myknowledge" [ref=e34]
+          - generic [ref=e35]: 내 지식
+      - generic "기본 컬렉션" [ref=e41] [cursor=pointer]:
+        - img "result" [ref=e42]
+        - generic [ref=e43]: 기본 컬렉션
+      - generic [ref=e44]:
+        - generic [ref=e45] [cursor=pointer]:
+          - img "questionIcon" [ref=e46]
+          - generic [ref=e50]: 도움말 / 커뮤니티
+          - img "dropdownArrow" [ref=e51]
+        - generic [ref=e52] [cursor=pointer]:
+          - img "teamInvite" [ref=e53]
+          - generic [ref=e54]: 팀원 초대하기
+        - generic [ref=e56] [cursor=pointer]:
+          - generic [ref=e57]:
+            - generic [ref=e58]: 성이름
+            - generic [ref=e59]: 무료
+          - generic [ref=e60]: junghoon0112@gmail.com
+          - img "setting" [ref=e61]
+        - paragraph [ref=e65] [cursor=pointer]: 고급모델
+        - generic [ref=e68] [cursor=pointer]: 업그레이드
+    - generic [ref=e69]:
+      - generic [ref=e71]:
+        - generic [ref=e72] [cursor=pointer]:
+          - img "upgrade icon" [ref=e73]
+          - text: 업그레이드
+        - generic [ref=e74] [cursor=pointer]:
+          - img "chrome" [ref=e75]
+          - text: 확장프로그램 설치
+      - generic [ref=e77]:
+        - generic [ref=e80]: 쌓아둔 자료들을 인사이트로 전환하세요
+        - generic [ref=e82]:
+          - button "새 프로젝트" [ref=e83] [cursor=pointer]:
+            - generic [ref=e84]: 새 프로젝트
+          - button "자료 가져오기" [ref=e86] [cursor=pointer]:
+            - generic [ref=e87]: 자료 가져오기
+          - button "주제로 시작" [ref=e88] [cursor=pointer]:
+            - generic [ref=e89]: 주제로 시작
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - heading "최근 프로젝트" [level=3] [ref=e95]
+            - generic [ref=e96]:
+              - button "검색" [ref=e97] [cursor=pointer]
+              - button "유형" [ref=e98] [cursor=pointer]:
+                - generic [ref=e99]: 유형
+              - generic [ref=e100]:
+                - button "그리드 뷰" [ref=e101] [cursor=pointer]:
+                  - generic [ref=e102]: 그리드
+                - button "목록 뷰" [ref=e103] [cursor=pointer]:
+                  - generic [ref=e104]: 목록
+          - generic [ref=e109] [cursor=pointer]: 새 프로젝트
+        - img [ref=e114]
+        - generic [ref=e116]:
+          - generic [ref=e117] [cursor=pointer]: 요금제
+          - generic [ref=e118] [cursor=pointer]: 발견
+          - generic [ref=e119] [cursor=pointer]: 블로그
+          - generic [ref=e120] [cursor=pointer]: 채용
+          - generic [ref=e123] [cursor=pointer]:
+            - img [ref=e124]
+            - generic [ref=e125]: 한국어
+            - img [ref=e126]
+  - iframe [ref=e127]:
+    

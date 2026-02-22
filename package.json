@@ -12,6 +12,7 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
+    "test": "bun test",
     "build": "bun build src/index.ts --outdir ./dist --target node",
     "prepublishOnly": "bun run build",
     "lint": "oxlint",

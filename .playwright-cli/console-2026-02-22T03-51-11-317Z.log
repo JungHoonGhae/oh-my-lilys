@@ -1,0 +1,7 @@
+[     220ms] Uncaught TypeError: Cannot read properties of null (reading 'appendChild')
+    at C (https://c.paypal.com/da/r/fb.js:0:9863)
+    at O (https://c.paypal.com/da/r/fb.js:0:8606)
+    at Un.asyncData.initAndCollect (https://c.paypal.com/da/r/fb.js:0:72012)
+    at <anonymous> (https://c.paypal.com/da/r/fb.js:0:72046)
+    at <anonymous> (https://c.paypal.com/da/r/fb.js:0:72063)
+[    1867ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://o4508171248402432.ingest.us.sentry.io/api/4508199248658432/envelope/?sentry_key=88873c504fada17ad541bb7b50896500&sentry_version=7&sentry_client=sentry.javascript.react%2F8.35.0:0

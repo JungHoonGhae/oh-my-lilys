@@ -229,11 +229,18 @@ export const NOTE_TYPES: { type: NoteType; name: string }[] = [
   { type: "deep_dive", name: "Deep Dive" },
 ];
 
+export async function generateNote(
+  sessionId: string,
+  noteType: string = "detailed"
+): Promise<NoteResponse> {
+  return createNote(sessionId, noteType as NoteType);
+}
+
 export async function createNote(
   sessionId: string,
   noteType: NoteType
 ): Promise<{ noteId: string }> {
-  return makeRequest<{ noteId: string }>(`${AWS_API_BASE}/notes`, {
+  const response = await makeRequest<{ noteId: string }>(`${AWS_API_BASE}/notes`, {
     method: "POST",
     isAWS: true,
     queryParams: { provider: "google" },
@@ -242,6 +249,12 @@ export async function createNote(
       noteType,
     }),
   });
+  
+  if (!response.noteId) {
+    throw new Error("Note creation failed: no noteId returned");
+  }
+  
+  return response;
 }
 
 export async function getSessionMetadata(sessionId: string): Promise<any> {

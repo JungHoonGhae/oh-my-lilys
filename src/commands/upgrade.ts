@@ -1,10 +1,11 @@
 import { logger } from "../utils/logger.js";
 
-const VERSION = "1.0.0";
 const PACKAGE_NAME = "oh-my-lilys";
 const NPM_REGISTRY = "https://registry.npmjs.org";
 
-export async function upgrade() {
+export async function upgrade(currentVersion?: string) {
+  const version = currentVersion ?? "unknown";
+
   logger.info("Checking for updates...");
 
   try {
@@ -12,12 +13,16 @@ export async function upgrade() {
     const data = await response.json() as { version: string };
     const latestVersion = data.version;
 
-    if (latestVersion === VERSION) {
-      logger.success(`You are on the latest version: v${VERSION}`);
+    if (version !== "unknown" && latestVersion === version) {
+      logger.success(`You are on the latest version: v${version}`);
       return;
     }
 
-    logger.warn(`Update available: v${VERSION} → v${latestVersion}`);
+    if (version === "unknown") {
+      logger.warn(`Latest version available: v${latestVersion}`);
+    } else {
+      logger.warn(`Update available: v${version} → v${latestVersion}`);
+    }
     logger.info("To update, run:");
     logger.dim(`  npm install -g ${PACKAGE_NAME}`);
     logger.dim(`  pnpm add -g ${PACKAGE_NAME}`);

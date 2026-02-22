@@ -44,10 +44,10 @@ async function main() {
       break;
     case "upgrade":
     case "update":
-      await upgrade();
+      await upgrade(VERSION);
       break;
     case "doctor":
-      await doctor();
+      await doctor(VERSION);
       break;
     case "summarize":
       const url = args[1];

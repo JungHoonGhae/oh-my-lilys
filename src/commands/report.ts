@@ -37,10 +37,11 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
   }
 
   if (noteType) {
-    const validTypes = NOTE_TYPES.map(n => n.type).join(", ");
-    if (!validTypes.includes(noteType)) {
+    const validTypes = NOTE_TYPES.map((n) => n.type);
+    const exact = NOTE_TYPES.find((n) => n.type === noteType);
+    if (!exact) {
       logger.error(`Invalid note type: ${noteType}`);
-      logger.info(`Valid: ${validTypes}`);
+      logger.info(`Valid: ${validTypes.join(", ")}`);
       process.exit(1);
     }
   }
@@ -49,8 +50,16 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
 
   try {
     if (noteType) {
+      const exact = NOTE_TYPES.find((n) => n.type === noteType);
+      if (!exact) {
+        logger.error(`Invalid note type: ${noteType}`);
+        logger.info(`Valid: ${NOTE_TYPES.map((n) => n.type).join(", ")}`);
+        process.exit(1);
+      }
+
+      const parsedNoteType: NoteType = exact.type;
       logger.info(`Generating ${styles.value(noteType)} note...`);
-      const result = await createNote(sessionId, noteType as NoteType);
+      const result = await createNote(sessionId, parsedNoteType);
       logger.success(`Note created: ${styles.value(result.noteId)}`);
       
       if (watch) {
