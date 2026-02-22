@@ -44,6 +44,7 @@ If this tool helps you, consider supporting its maintenance:
 | Requirement | Version |
 |-------------|---------|
 | Node.js | >= 16 |
+| playwright-cli | For auto-auth |
 | lilys.ai account | For authentication |
 
 ## Installation
@@ -59,12 +60,44 @@ pnpm add -g oh-my-lilys
 bun add -g oh-my-lilys
 ```
 
-## Usage
+## Quick Start
 
 ```bash
-lilys help
-lilys --help
-lilys -h
+# Authenticate (auto-detect from browser)
+lilys auth
+
+# Summarize a YouTube video
+lilys summarize https://youtube.com/watch?v=...
+```
+
+## Authentication
+
+### Automatic (Recommended)
+
+```bash
+lilys auth
+```
+
+This will:
+1. Check if you're already logged in at lilys.ai
+2. If logged in, automatically extract the token
+3. If not logged in, open a browser for Google login
+4. Save the token for future use
+
+**Prerequisites:**
+```bash
+npm install -g playwright-cli
+```
+
+### Manual
+
+```bash
+# 1. Open https://lilys.ai in your browser
+# 2. Log in with Google
+# 3. Open DevTools (F12) → Application → Local Storage
+# 4. Copy the 'access_token' value
+# 5. Run:
+lilys auth <your-token>
 ```
 
 ## AI Agent Skill
