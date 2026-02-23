@@ -1,4 +1,4 @@
-import { listSessions } from "../api/client.js";
+import { listSessions, AuthError } from "../api/client.js";
 import { isAuthenticated } from "../utils/config.js";
 import { logger, styles } from "../utils/logger.js";
 
@@ -21,7 +21,7 @@ export async function sessions() {
     logger.break();
     logger.log(`${logger.bold("Found")} ${styles.value(String(sessionsList.length))} ${logger.bold("session(s):")}`);
     logger.break();
-    
+
     for (const session of sessionsList.slice(0, 10)) {
       logger.log(`${styles.key(String(session.id))}`);
       logger.dim(`  Title: ${session.title}`);
@@ -35,6 +35,11 @@ export async function sessions() {
       logger.dim(`... and ${sessionsList.length - 10} more`);
     }
   } catch (error) {
+    if (error instanceof AuthError) {
+      logger.error(error.message);
+      logger.dim("Run 'lilys login' to re-authenticate.");
+      process.exit(1);
+    }
     logger.error("Error:", error instanceof Error ? error.message : error);
     process.exit(1);
   }

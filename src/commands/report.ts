@@ -1,4 +1,4 @@
-import { getReport, getNotesForSession, createNote, NOTE_TYPES, type NoteType, listSessions } from "../api/client.js";
+import { getReport, getNotesForSession, createNote, NOTE_TYPES, type NoteType, listSessions, AuthError } from "../api/client.js";
 import { isAuthenticated } from "../utils/config.js";
 import { logger, styles } from "../utils/logger.js";
 
@@ -142,6 +142,11 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
     logger.break();
     logger.log(`View online: ${styles.url(`https://lilys.ai/digest/${sessionId}/main`)}`);
   } catch (error) {
+    if (error instanceof AuthError) {
+      logger.error(error.message);
+      logger.dim("Run 'lilys login' to re-authenticate.");
+      process.exit(1);
+    }
     logger.error("Error:", error instanceof Error ? error.message : error);
     process.exit(1);
   }
@@ -149,27 +154,35 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
 
 async function watchForReport(sessionId: string, timeoutSeconds: number): Promise<void> {
   const startTime = Date.now();
-  const interval = 5000;
+  const interval = 3000; // Check every 3 seconds
   const maxAttempts = Math.floor((timeoutSeconds * 1000) / interval);
+
+  logger.info("Waiting for note generation (this may take a few minutes)...");
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    logger.dim(`[${elapsed}s] Checking for report...`);
     
-    const notes = await getNotesForSession(sessionId);
-    
-    if (notes.length > 0) {
-      const latestNote = notes[0];
-      const noteId = String(latestNote.sid || latestNote.noteId);
+    try {
+      const notes = await getNotesForSession(sessionId);
       
-      logger.info(`[${elapsed}s] Note found: ${noteId}, fetching content...`);
-      
-      const reportData = await getReport(sessionId, noteId);
-      
-      if (reportData.content && reportData.content !== "No notes found for this session") {
-        logger.success(`[${elapsed}s] Report ready!`);
-        return;
+      if (notes.length > 0) {
+        const latestNote = notes[0];
+        const noteId = String(latestNote.sid || latestNote.noteId);
+        
+        // Check if note has content
+        const reportData = await getReport(sessionId, noteId);
+        
+        if (reportData.content && reportData.content !== "No notes found for this session") {
+          logger.success(`[${elapsed}s] Report ready!`);
+          return;
+        } else {
+          logger.dim(`[${elapsed}s] Note found (${noteId}), but still generating...`);
+        }
+      } else {
+        logger.dim(`[${elapsed}s] Waiting for note generation...`);
       }
+    } catch (error) {
+      logger.dim(`[${elapsed}s] Checking... (will retry)`);
     }
     
     if (attempt < maxAttempts - 1) {

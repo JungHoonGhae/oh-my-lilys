@@ -4,6 +4,13 @@ const API_BASE = "https://api.lilys.ai/backend";
 const AWS_API_BASE = "https://wp8tovrz8a.execute-api.ap-northeast-2.amazonaws.com/release";
 const METADATA_API = "https://5wjqcmluif.execute-api.ap-northeast-2.amazonaws.com/release";
 
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthError";
+  }
+}
+
 interface SourceMetadata {
   sourceId: string;
   sourceType: string;
@@ -63,6 +70,14 @@ async function makeRequest<T>(
 
   if (!response.ok) {
     const error = await response.text();
+    // Check for authentication errors
+    if (response.status === 401 || response.status === 403) {
+      throw new AuthError('Authentication failed. Please run "lilys login" to re-authenticate.');
+    }
+    // Check for invalid_token in 400 responses
+    if (response.status === 400 && (error.includes("invalid_token") || error.includes("Unauthorized"))) {
+      throw new AuthError('Authentication failed. Please run "lilys login" to re-authenticate.');
+    }
     throw new Error(`API error: ${response.status} - ${error}`);
   }
 
@@ -188,7 +203,11 @@ export async function getNotesForSession(sessionId: string): Promise<any[]> {
       queryParams: { provider: "google" },
     });
     return response.notes || [];
-  } catch {
+  } catch (error) {
+    // Re-throw AuthError for proper handling by caller
+    if (error instanceof AuthError) {
+      throw error;
+    }
     return [];
   }
 }
@@ -225,21 +244,30 @@ export async function createNote(
   sessionId: string,
   noteType: NoteType
 ): Promise<{ noteId: string }> {
-  const response = await makeRequest<{ noteId: string }>(`${AWS_API_BASE}/notes`, {
-    method: "POST",
-    isAWS: true,
-    queryParams: { provider: "google" },
-    body: JSON.stringify({
-      sessionId,
-      noteType,
-    }),
-  });
-  
-  if (!response.noteId) {
-    throw new Error("Note creation failed: no noteId returned");
+  try {
+    const response = await makeRequest<{ noteId: string }>(`${AWS_API_BASE}/notes`, {
+      method: "POST",
+      isAWS: true,
+      queryParams: { provider: "google" },
+      body: JSON.stringify({
+        sessionId,
+        noteType,
+      }),
+    });
+    
+    if (!response.noteId) {
+      throw new Error("Note creation failed: no noteId returned");
+    }
+    
+    return response;
+  } catch (error) {
+    // 504 timeout - note generation may still be in progress
+    if (error instanceof Error && error.message.includes("504")) {
+      console.log("Note generation started (timeout received, but generation may continue in background)");
+      return { noteId: "pending" };
+    }
+    throw error;
   }
-  
-  return response;
 }
 
 export async function getSessionMetadata(sessionId: string): Promise<any> {
@@ -265,7 +293,11 @@ export async function listSessions(): Promise<Session[]> {
       createdAt: s.created,
     }));
   } catch (error) {
-    console.warn("Could not fetch sessions list");
+    console.error("Could not fetch sessions list:", error);
+    // Re-throw AuthError for proper handling by caller
+    if (error instanceof AuthError) {
+      throw error;
+    }
     return [];
   }
 }
