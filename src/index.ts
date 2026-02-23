@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { clearToken } from "./utils/config.js";
 import { auth } from "./commands/login.js";
 import { summarize } from "./commands/summarize.js";
 import { sessions } from "./commands/sessions.js";
@@ -10,15 +9,7 @@ import { showLanguage, setResultLanguageCmd } from "./commands/language.js";
 import { logger, banner } from "./utils/logger.js";
 import { getToken } from "./utils/config.js";
 import { NOTE_TYPES } from "./api/client.js";
-
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
-const VERSION = pkg.version;
+import { VERSION } from "./version.js";
 
 const args = process.argv.slice(2);
 const command = args[0] || "help";
@@ -38,12 +29,10 @@ async function main() {
 
   switch (command) {
     case "auth":
-    case "login":
       const tokenArg = args[1];
       await auth(tokenArg);
       break;
     case "upgrade":
-    case "update":
       await upgrade(VERSION);
       break;
     case "doctor":
@@ -77,10 +66,6 @@ async function main() {
       const options = parseReportOptions(args);
       await report(sessionId, options);
       break;
-    case "logout":
-      clearToken();
-      logger.success("Logged out");
-      break;
     case "whoami":
       const token = getToken();
       if (token) {
@@ -90,7 +75,6 @@ async function main() {
       }
       break;
     case "lang":
-    case "language":
       const langArg = args[1];
       if (langArg) {
         await setResultLanguageCmd(langArg);
@@ -137,15 +121,13 @@ ${logger.bold("Usage:")}
   lilys <command> [options]
 
 ${logger.bold("Commands:")}
-  auth          ${logger.dim("Authenticate (Google available, Naver/Email coming soon)")}
-  login         ${logger.dim("Alias for auth")}
+  auth          ${logger.dim("Authenticate with lilys.ai")}
   summarize     ${logger.dim("Summarize a URL (YouTube, PDF, audio, website)")}
   sessions      ${logger.dim("List your digest sessions")}
   report        ${logger.dim("Get report for a session")}
   lang          ${logger.dim("Get/set AI result language")}
+  upgrade       ${logger.dim("Check for updates")}
   doctor        ${logger.dim("Diagnose and fix issues")}
-  upgrade       ${logger.dim("Check for new versions")}
-  logout        ${logger.dim("Clear stored credentials")}
   whoami        ${logger.dim("Check authentication status")}
   help          ${logger.dim("Show this help message")}
   version       ${logger.dim("Show version")}
