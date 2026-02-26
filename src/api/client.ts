@@ -949,9 +949,9 @@ export async function processGenImageTags(
 
   let result = content;
   for (let i = 0; i < matches.length; i++) {
-    const [fullMatch, description] = matches[i];
+    const [fullMatch, description] = matches[i]!;
     onProgress?.(i + 1, matches.length);
-    const imageUrl = await generateImage(description);
+    const imageUrl = await generateImage(description!);
     if (imageUrl) {
       result = result.replace(fullMatch, `![${description}](${imageUrl})`);
     } else {
@@ -1012,26 +1012,26 @@ export function extractSentenceIndices(content: string): number[] {
   const indices = new Set<number>();
   const pattern = /<<([^>]+)>>/g;
   for (const match of content.matchAll(pattern)) {
-    for (const part of match[1].split(",")) {
+    for (const part of match[1]!.split(",")) {
       const trimmed = part.trim();
       // "N-N" → range of indices (e.g., 10-12 → 10, 11, 12)
       const range = trimmed.match(/^(\d+)-(\d+)$/);
       if (range) {
-        const start = parseInt(range[1]);
-        const end = parseInt(range[2]);
+        const start = parseInt(range[1]!);
+        const end = parseInt(range[2]!);
         for (let i = start; i <= end; i++) indices.add(i);
         continue;
       }
       // "A-N" or "1-N" with letter prefix → single index
       const prefixed = trimmed.match(/^[A-Za-z]-(\d+)$/);
       if (prefixed) {
-        indices.add(parseInt(prefixed[1]));
+        indices.add(parseInt(prefixed[1]!));
         continue;
       }
       // Plain number
       const plain = trimmed.match(/^(\d+)$/);
       if (plain) {
-        indices.add(parseInt(plain[1]));
+        indices.add(parseInt(plain[1]!));
       }
     }
   }
@@ -1068,7 +1068,7 @@ export async function processVideoFrames(
   const realTimestamps = [...new Set(
     indices
       .filter(i => i < sentenceTimestamps.length)
-      .map(i => Math.floor(sentenceTimestamps[i]))
+      .map(i => Math.floor(sentenceTimestamps[i]!))
   )].sort((a, b) => a - b);
 
   if (realTimestamps.length === 0) {
@@ -1084,7 +1084,7 @@ export async function processVideoFrames(
   let framesReady = false;
   for (let attempt = 0; attempt < 3; attempt++) {
     await new Promise(r => setTimeout(r, 3000));
-    const check = await fetch(getThumbnailUrl(sourceId, realTimestamps[0]), { method: "HEAD" });
+    const check = await fetch(getThumbnailUrl(sourceId, realTimestamps[0]!), { method: "HEAD" });
     if (check.ok) { framesReady = true; break; }
     onProgress?.(`Waiting for frames... (attempt ${attempt + 2})`);
   }
@@ -1100,21 +1100,21 @@ export async function processVideoFrames(
   const usedTimestamps = new Set<number>();
 
   for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].match(/^#{1,3}\s+/)) continue;
+    if (!lines[i]!.match(/^#{1,3}\s+/)) continue;
 
     // Collect content until next heading
-    let sectionContent = lines[i];
-    for (let j = i + 1; j < lines.length && !lines[j].match(/^#{1,3}\s+/); j++) {
-      sectionContent += "\n" + lines[j];
+    let sectionContent = lines[i]!;
+    for (let j = i + 1; j < lines.length && !lines[j]!.match(/^#{1,3}\s+/); j++) {
+      sectionContent += "\n" + lines[j]!;
     }
 
     const sectionIndices = extractSentenceIndices(sectionContent);
     const firstValid = sectionIndices.find(idx =>
-      idx < sentenceTimestamps.length && !usedTimestamps.has(Math.floor(sentenceTimestamps[idx]))
+      idx < sentenceTimestamps.length && !usedTimestamps.has(Math.floor(sentenceTimestamps[idx]!))
     );
 
     if (firstValid !== undefined) {
-      const ts = Math.floor(sentenceTimestamps[firstValid]);
+      const ts = Math.floor(sentenceTimestamps[firstValid]!);
       if (usedTimestamps.has(ts)) continue;
       usedTimestamps.add(ts);
       const url = getThumbnailUrl(sourceId, ts);
