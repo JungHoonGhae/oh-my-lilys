@@ -1,6 +1,6 @@
 {
   "name": "oh-my-lilys",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "CLI tool for lilys.ai - Summarize YouTube, PDF, websites, and audio",
   "type": "module",
   "bin": {

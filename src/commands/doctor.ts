@@ -1,6 +1,7 @@
 import { existsSync, statSync } from "fs";
 
-import { getConfig, getConfigFilePath, getToken } from "../utils/config.js";
+import { getConfig, getConfigFilePath, getTokenAsync } from "../utils/config.js";
+import { isKeychainSupported, getFromKeychain } from "../utils/keychain.js";
 import { getUserPreferences } from "../api/client.js";
 import { logger, styles } from "../utils/logger.js";
 
@@ -22,8 +23,9 @@ export async function doctor(currentVersion?: string) {
   const results: DoctorResult[] = [];
 
   results.push(await checkVersion(version));
-  results.push(checkToken());
-  results.push(checkTokenExpiry());
+  results.push(await checkToken());
+  results.push(await checkKeychainStatus());
+  results.push(await checkTokenExpiry());
   results.push(await checkApiConnection());
   results.push(checkConfig());
   results.push(checkConfigPermissions());
@@ -60,9 +62,9 @@ export async function doctor(currentVersion?: string) {
   }
 }
 
-function checkToken(): DoctorResult {
-  const token = getToken();
-  
+async function checkToken(): Promise<DoctorResult> {
+  const token = await getTokenAsync();
+
   if (!token) {
     return {
       name: "Authentication",
@@ -78,9 +80,49 @@ function checkToken(): DoctorResult {
   };
 }
 
-function checkTokenExpiry(): DoctorResult {
+async function checkKeychainStatus(): Promise<DoctorResult> {
+  if (!isKeychainSupported()) {
+    return {
+      name: "Keychain",
+      status: "warn",
+      message: "macOS Keychain not available (non-macOS platform)",
+    };
+  }
+
   const config = getConfig();
-  const token = config.token;
+  if (!config.useKeychain) {
+    return {
+      name: "Keychain",
+      status: "warn",
+      message: "Not using Keychain. Re-run 'lilys auth' to enable.",
+    };
+  }
+
+  try {
+    const token = await getFromKeychain();
+    if (token) {
+      return {
+        name: "Keychain",
+        status: "pass",
+        message: "Token stored securely in macOS Keychain",
+      };
+    }
+    return {
+      name: "Keychain",
+      status: "fail",
+      message: "Keychain enabled but no token found. Re-run 'lilys auth'.",
+    };
+  } catch {
+    return {
+      name: "Keychain",
+      status: "fail",
+      message: "Failed to access Keychain",
+    };
+  }
+}
+
+async function checkTokenExpiry(): Promise<DoctorResult> {
+  const token = await getTokenAsync();
 
   if (!token) {
     return {
@@ -224,7 +266,7 @@ function checkConfigPermissions(): DoctorResult {
 }
 
 async function checkApiConnection(): Promise<DoctorResult> {
-  const token = getToken();
+  const token = await getTokenAsync();
 
   if (!token) {
     return {

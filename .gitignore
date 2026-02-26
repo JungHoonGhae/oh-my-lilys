@@ -33,3 +33,13 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Finder (MacOS) folder config
 .DS_Store
 
+# Lab (reverse engineering, bundles, security, planning — not for repo)
+.lab/
+src/commands/audit.ts
+
+# Playwright CLI artifacts
+.playwright-cli/
+
+# Test scripts
+test-*.ts
+

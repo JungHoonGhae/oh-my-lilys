@@ -7,7 +7,7 @@ export async function showLanguage() {
   const stored = getResultLanguage();
   logger.log(`${logger.bold("Current AI Result Language:")} ${styles.value(stored)}`);
 
-  if (isAuthenticated()) {
+  if (await isAuthenticated()) {
     try {
       const prefs = await getUserPreferences();
       const resultLang = prefs.userPreference?.resultLanguage;
@@ -19,7 +19,7 @@ export async function showLanguage() {
 }
 
 export async function setResultLanguageCmd(lang: string) {
-  if (!isAuthenticated()) {
+  if (!(await isAuthenticated())) {
     logger.error("Not authenticated. Run 'lilys login' first.");
     process.exit(1);
   }

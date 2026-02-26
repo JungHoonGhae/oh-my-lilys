@@ -136,3 +136,15 @@ export async function fetchTokenFromBrowser(headless: boolean = true): Promise<s
     return null;
   }
 }
+
+export async function fetchRefreshTokenFromBrowser(): Promise<string | null> {
+  try {
+    if (!(await isBrowserRunning())) {
+      return null;
+    }
+
+    return await readLocalStorage("refresh_token");
+  } catch {
+    return null;
+  }
+}

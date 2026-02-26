@@ -3,7 +3,7 @@ import { isAuthenticated } from "../utils/config.js";
 import { logger, styles } from "../utils/logger.js";
 
 export async function summarize(url: string) {
-  if (!isAuthenticated()) {
+  if (!(await isAuthenticated())) {
     logger.error("Not authenticated. Run 'lilys login' first.");
     process.exit(1);
   }
