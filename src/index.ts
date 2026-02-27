@@ -196,8 +196,8 @@ async function main() {
       if (!sessionId) {
         logger.error("Usage: lilys report <sessionId> [options]");
         logger.info("Options:");
-        logger.dim("  --generate <category> AI streaming generation (report, textbook, quiz, ...)");
-        logger.dim("  --note-type <type>    Note type (detailed, key_points, easy, ...)");
+        logger.dim("  --generate <category> Stream a quick draft — terminal only, not saved to web");
+        logger.dim("  --note-type <type>    Generate web-visible note on lilys.ai (detailed, key_points, easy, ...)");
         logger.dim("  --watch               Watch for completion");
         logger.dim("  --timeout <seconds>   Watch timeout (default: 120)");
         logger.dim("  --export markdown     Export as markdown");
@@ -285,8 +285,8 @@ ${logger.bold("Search Options:")}
   --cursor <token>  ${logger.dim("Pagination cursor")}
 
 ${logger.bold("Report Options:")}
-  --generate <cat>    ${logger.dim("AI streaming generation (report, textbook, quiz, ...)")}
-  --note-type <type>  ${logger.dim("Generate specific note type")}
+  --generate <cat>    ${logger.dim("Stream a quick draft (terminal only, not saved to web)")}
+  --note-type <type>  ${logger.dim("Generate web-visible note on lilys.ai")}
   --watch             ${logger.dim("Watch for report completion")}
   --timeout <secs>    ${logger.dim("Watch timeout (default: 120)")}
   --export markdown   ${logger.dim("Export as markdown file")}

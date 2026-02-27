@@ -109,6 +109,8 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
     // ─── Generate via tailored-summary (SSE streaming) ───
     if (generate) {
       logger.info(`Generating ${styles.value(generate)} via AI streaming...`);
+      logger.log(logger.dim(`  → Terminal-only mode. This note will not appear on lilys.ai web.`));
+      logger.log(logger.dim(`  → For web-visible notes: lilys report ${sessionId} --note-type detailed`));
       let lastStatus = "";
       const result = await generateTailoredSummary(sessionId, {
         category: generate as TailoredCategory,
