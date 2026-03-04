@@ -40,6 +40,9 @@ src/commands/audit.ts
 # Claude Code instructions (private)
 CLAUDE.md
 
+# Superset config
+.superset/
+
 # Playwright CLI artifacts
 .playwright-cli/
 
