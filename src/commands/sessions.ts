@@ -2,7 +2,7 @@ import { listSessions, AuthError } from "../api/client.js";
 import { isAuthenticated } from "../utils/config.js";
 import { logger, styles } from "../utils/logger.js";
 
-export async function sessions() {
+export async function sessions(options: { json?: boolean } = {}) {
   if (!(await isAuthenticated())) {
     logger.error("Not authenticated. Run 'lilys login' first.");
     process.exit(1);
@@ -12,6 +12,11 @@ export async function sessions() {
 
   try {
     const sessionsList = await listSessions();
+
+    if (options.json) {
+      console.log(JSON.stringify(sessionsList, null, 2));
+      return;
+    }
 
     if (sessionsList.length === 0) {
       logger.warn("No sessions found.");

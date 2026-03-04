@@ -63,10 +63,11 @@ export interface ReportOptions {
   images?: boolean;   // process <gen-image> tags into real images
   frames?: boolean;   // inject video frames from timestamps
   visual?: boolean;   // trigger visual rendering for web display
+  json?: boolean;
 }
 
 export async function report(sessionId: string, options: ReportOptions = {}) {
-  const { noteType, generate, watch = false, timeout = 120, export: exportFormat, images = false, frames = false, visual = false } = options;
+  const { noteType, generate, watch = false, timeout = 120, export: exportFormat, images = false, frames = false, visual = false, json = false } = options;
 
   if (!(await isAuthenticated())) {
     logger.error("Not authenticated. Run 'lilys login' first.");
@@ -147,12 +148,22 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
         if (frames && sourceId) {
           content = await processVideoFrames(content, sourceId, sessionId, sourceType, (msg) => logger.dim(`  ${msg}`));
         }
+
+        if (json) {
+          console.log(JSON.stringify({ sessionId, noteId: result.noteId, type: "tailored", category: generate, content }, null, 2));
+          return;
+        }
+
         if (exportFormat === "markdown") {
           await exportAsMarkdown(sessionId, content);
           return;
         }
         printReport(content, sessionId, true);
       } else {
+        if (json) {
+          console.log(JSON.stringify({ sessionId, noteId: result.noteId, type: "tailored", category: generate, content: null }, null, 2));
+          return;
+        }
         logger.warn("Generation completed but no content received.");
         logger.log(`View online: ${styles.url(`https://lilys.ai/digest/${sessionId}/main`)}`);
       }
@@ -178,6 +189,11 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
       // Trigger visual rendering for web display
       if (visual) {
         await renderVisual(sessionId);
+      }
+
+      if (json) {
+        console.log(JSON.stringify({ sessionId, noteId: result.noteId, noteTabId: result.noteTabId, type: "web", noteType }, null, 2));
+        return;
       }
     }
 
@@ -219,6 +235,12 @@ export async function report(sessionId: string, options: ReportOptions = {}) {
     // Inject video frames if --frames flag
     if (frames && sourceId) {
       textContent = await processVideoFrames(textContent, sourceId, sessionId, sourceType, (msg) => logger.dim(`  ${msg}`));
+    }
+
+    if (json) {
+      const noteId = reportData.note?.sid || reportData.note?.noteId || null;
+      console.log(JSON.stringify({ sessionId, noteId, isMarkdown: reportData.isMarkdown, content: textContent }, null, 2));
+      return;
     }
 
     if (exportFormat === "markdown") {

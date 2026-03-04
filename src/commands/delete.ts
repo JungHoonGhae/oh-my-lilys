@@ -12,7 +12,7 @@ async function confirm(message: string): Promise<boolean> {
   return false;
 }
 
-export async function deleteCommand(sids: string[], options: { skipConfirm?: boolean } = {}) {
+export async function deleteCommand(sids: string[], options: { skipConfirm?: boolean; json?: boolean } = {}) {
   if (!(await isAuthenticated())) {
     logger.error("Not authenticated. Run 'lilys login' first.");
     process.exit(1);
@@ -35,6 +35,12 @@ export async function deleteCommand(sids: string[], options: { skipConfirm?: boo
 
   try {
     await deleteSessions(sids);
+
+    if (options.json) {
+      console.log(JSON.stringify({ deleted: true, count: sids.length, sessionIds: sids }, null, 2));
+      return;
+    }
+
     logger.success(`Deleted ${sids.length} session(s).`);
   } catch (error) {
     if (error instanceof AuthError) {

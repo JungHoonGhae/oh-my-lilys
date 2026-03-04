@@ -664,8 +664,18 @@ export async function shareNote(
   sessionId: string,
   noteId?: string
 ): Promise<any> {
-  const body: any = { sessionId, provider: "google" };
-  if (noteId) body.noteId = noteId;
+  // Auto-resolve noteId if not provided (required by API)
+  if (!noteId) {
+    const notes = await getNotesForSession(sessionId);
+    if (notes.length === 0) {
+      throw new Error(
+        "No notes found. Generate a report first: lilys report " + sessionId + " --note-type detailed"
+      );
+    }
+    noteId = String(notes[0].sid || notes[0].noteId);
+  }
+
+  const body = { sessionId, provider: "google", noteId };
 
   return makeRequest<any>(`${TASK_RUNNER_API}/note-share`, {
     method: "POST",
@@ -1398,6 +1408,101 @@ export const USAGE_TYPES = [
   "num_premium_template",
   "premium_animation_trial",
 ] as const;
+
+// ─── AI Chat (react-agent-command) ───
+
+export async function createChatThread(sessionId: string): Promise<{ id: number }> {
+  return makeRequest<{ id: number }>(`${AGENT_API}/sessions/${sessionId}/chat-threads`, {
+    method: "POST",
+    headers: { "Lilys-Provider": "google" } as any,
+  });
+}
+
+export async function listChatThreads(sessionId: string): Promise<any[]> {
+  const response = await makeRequest<any>(`${AGENT_API}/sessions/${sessionId}/chat-threads`, {
+    method: "GET",
+    headers: { "Lilys-Provider": "google" } as any,
+  });
+  return response.chatThreads || response.threads || response || [];
+}
+
+export async function sendChatMessage(
+  sessionId: string,
+  chatThreadId: number,
+  query: string,
+  options: {
+    language?: string;
+    modelProfileKey?: string;
+    onEvent?: (event: SSEEvent) => void;
+  } = {}
+): Promise<{ thinking: string; response: string }> {
+  const { language = "ko", modelProfileKey = "v1/free", onEvent } = options;
+
+  const token = await getValidToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const res = await fetch(`${AGENT_API}/v5/react-agent-command`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "Lilys-Provider": "google",
+    },
+    body: JSON.stringify({
+      sessionId: parseInt(sessionId, 10),
+      chatThreadId,
+      query,
+      language,
+      modelProfileKey,
+      requestId: "all",
+      contentBlocks: [{ type: "text", text: query }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat failed: ${res.status} - ${err.slice(0, 300)}`);
+  }
+
+  const thinkingChunks: string[] = [];
+  const responseChunks: string[] = [];
+
+  if (res.body) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() || "";
+
+      for (const part of parts) {
+        for (const line of part.split("\n")) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data: SSEEvent = JSON.parse(line.slice(6));
+            if (data.event === "thinking" && data.status === "chunk" && data.payload?.content) {
+              thinkingChunks.push(data.payload.content);
+            }
+            if (data.event === "response" && data.status === "chunk" && data.payload?.content) {
+              responseChunks.push(data.payload.content);
+            }
+            onEvent?.(data);
+          } catch { /* non-JSON data line */ }
+        }
+      }
+    }
+  }
+
+  return {
+    thinking: thinkingChunks.join(""),
+    response: responseChunks.join(""),
+  };
+}
 
 export const QUOTA_PER_PLAN: Record<string, Record<string, number>> = {
   free: {

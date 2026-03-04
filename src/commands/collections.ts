@@ -81,13 +81,19 @@ export async function collectionsList(options: { json?: boolean } = {}) {
   }
 }
 
-export async function collectionsCreate(name: string, options: { parent?: string } = {}) {
+export async function collectionsCreate(name: string, options: { parent?: string; json?: boolean } = {}) {
   await requireAuth();
   logger.info(`Creating collection: ${styles.value(name)}`);
 
   try {
     const result = await createCollection(name, options.parent);
     const id = result.collectionId || result.collection?.collectionId;
+
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
     logger.success(`Collection created${id ? `: ${styles.key(id)}` : ""}`);
   } catch (error) {
     if (error instanceof AuthError) {
@@ -99,12 +105,18 @@ export async function collectionsCreate(name: string, options: { parent?: string
   }
 }
 
-export async function collectionsRename(collectionId: string, newName: string) {
+export async function collectionsRename(collectionId: string, newName: string, options: { json?: boolean } = {}) {
   await requireAuth();
   logger.info(`Renaming collection ${styles.key(collectionId)} to ${styles.value(newName)}`);
 
   try {
     await updateCollection(collectionId, newName);
+
+    if (options.json) {
+      console.log(JSON.stringify({ collectionId, newName, renamed: true }, null, 2));
+      return;
+    }
+
     logger.success("Collection renamed.");
   } catch (error) {
     if (error instanceof AuthError) {
@@ -116,12 +128,18 @@ export async function collectionsRename(collectionId: string, newName: string) {
   }
 }
 
-export async function collectionsDelete(collectionId: string) {
+export async function collectionsDelete(collectionId: string, options: { json?: boolean } = {}) {
   await requireAuth();
   logger.info(`Deleting collection: ${styles.key(collectionId)}`);
 
   try {
     await deleteCollection(collectionId);
+
+    if (options.json) {
+      console.log(JSON.stringify({ collectionId, deleted: true }, null, 2));
+      return;
+    }
+
     logger.success("Collection deleted.");
   } catch (error) {
     if (error instanceof AuthError) {
@@ -133,12 +151,18 @@ export async function collectionsDelete(collectionId: string) {
   }
 }
 
-export async function collectionsMove(collectionId: string, sids: string[]) {
+export async function collectionsMove(collectionId: string, sids: string[], options: { json?: boolean } = {}) {
   await requireAuth();
   logger.info(`Moving ${styles.value(String(sids.length))} session(s) to collection ${styles.key(collectionId)}`);
 
   try {
     await moveSessionsToCollection(collectionId, sids);
+
+    if (options.json) {
+      console.log(JSON.stringify({ collectionId, sessionIds: sids, moved: true }, null, 2));
+      return;
+    }
+
     logger.success("Sessions moved.");
   } catch (error) {
     if (error instanceof AuthError) {

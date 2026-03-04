@@ -12,8 +12,12 @@ import { usage } from "./commands/usage.js";
 import { share, unshare } from "./commands/share.js";
 import { exportPdfCommand } from "./commands/export-pdf.js";
 import { collectionsList, collectionsCreate, collectionsRename, collectionsDelete, collectionsMove } from "./commands/collections.js";
+import { chat } from "./commands/chat.js";
+import { thumbnail } from "./commands/thumbnail.js";
+import { translate } from "./commands/translate.js";
+import { whoami } from "./commands/whoami.js";
 import { logger, banner } from "./utils/logger.js";
-import { getTokenAsync, loadTokenFromKeychain } from "./utils/config.js";
+import { loadTokenFromKeychain } from "./utils/config.js";
 import { NOTE_TYPES } from "./api/client.js";
 import { VERSION } from "./version.js";
 
@@ -70,7 +74,7 @@ async function main() {
     }
 
     case "sessions":
-      await sessions();
+      await sessions({ json: hasFlag("--json") });
       break;
 
     case "search": {
@@ -93,7 +97,7 @@ async function main() {
         logger.error("Usage: lilys delete <sessionId> [sessionId2 ...] [--yes]");
         process.exit(1);
       }
-      await deleteCommand(sids, { skipConfirm: hasFlag("--yes") || hasFlag("-y") });
+      await deleteCommand(sids, { skipConfirm: hasFlag("--yes") || hasFlag("-y"), json: hasFlag("--json") });
       break;
     }
 
@@ -151,7 +155,7 @@ async function main() {
             logger.error("Usage: lilys collections create <name> [--parent ID]");
             process.exit(1);
           }
-          await collectionsCreate(name, { parent: getFlagValue("--parent") });
+          await collectionsCreate(name, { parent: getFlagValue("--parent"), json: hasFlag("--json") });
           break;
         }
         case "rename": {
@@ -161,7 +165,7 @@ async function main() {
             logger.error("Usage: lilys collections rename <collectionId> <newName>");
             process.exit(1);
           }
-          await collectionsRename(cid, newName);
+          await collectionsRename(cid, newName, { json: hasFlag("--json") });
           break;
         }
         case "delete": {
@@ -170,7 +174,7 @@ async function main() {
             logger.error("Usage: lilys collections delete <collectionId>");
             process.exit(1);
           }
-          await collectionsDelete(cid);
+          await collectionsDelete(cid, { json: hasFlag("--json") });
           break;
         }
         case "move": {
@@ -180,7 +184,7 @@ async function main() {
             logger.error("Usage: lilys collections move <collectionId> <sessionId...>");
             process.exit(1);
           }
-          await collectionsMove(cid, sids);
+          await collectionsMove(cid, sids, { json: hasFlag("--json") });
           break;
         }
         default:
@@ -218,26 +222,73 @@ async function main() {
         images: hasFlag("--images"),
         frames: hasFlag("--frames"),
         visual: hasFlag("--visual"),
+        json: hasFlag("--json"),
       });
       break;
     }
 
-    case "whoami": {
-      const token = await getTokenAsync();
-      if (token) {
-        logger.success("Authenticated");
-      } else {
-        logger.warn("Not authenticated. Run 'lilys auth' first.");
+    case "chat": {
+      const chatSessionId = args[1];
+      if (!chatSessionId) {
+        logger.error("Usage: lilys chat <sessionId> [query] [--thread ID] [--model paid] [--thinking] [--json]");
+        process.exit(1);
       }
+      const chatFlagArgs = ["--thread", "--model"];
+      const chatFlagValues = new Set(chatFlagArgs.flatMap(f => {
+        const v = getFlagValue(f);
+        return v ? [f, v] : [f];
+      }));
+      const queryParts = args.slice(2).filter(a => !a.startsWith("--") && !chatFlagValues.has(a));
+      const chatQuery = queryParts.length > 0 ? queryParts.join(" ") : undefined;
+      await chat(chatSessionId, chatQuery, {
+        thread: getFlagValue("--thread"),
+        json: hasFlag("--json"),
+        model: getFlagValue("--model"),
+        thinking: hasFlag("--thinking"),
+      });
       break;
     }
 
+    case "thumbnail": {
+      const thumbSessionId = args[1];
+      if (!thumbSessionId) {
+        logger.error("Usage: lilys thumbnail <sessionId> [--times 10,30,60] [--output dir] [--json]");
+        process.exit(1);
+      }
+      await thumbnail(thumbSessionId, {
+        times: getFlagValue("--times"),
+        output: getFlagValue("--output"),
+        json: hasFlag("--json"),
+      });
+      break;
+    }
+
+    case "translate": {
+      const trSessionId = args[1];
+      const trTo = getFlagValue("--to");
+      if (!trSessionId || !trTo) {
+        logger.error("Usage: lilys translate <sessionId> --to <lang> [--note-id ID] [--json]");
+        process.exit(1);
+      }
+      await translate(trSessionId, {
+        to: trTo,
+        noteId: getFlagValue("--note-id"),
+        json: hasFlag("--json"),
+      });
+      break;
+    }
+
+    case "whoami":
+      await whoami({ json: hasFlag("--json") });
+      break;
+
     case "lang": {
       const langArg = args[1];
+      const langJson = hasFlag("--json");
       if (langArg) {
-        await setResultLanguageCmd(langArg);
+        await setResultLanguageCmd(langArg, { json: langJson });
       } else {
-        await showLanguage();
+        await showLanguage({ json: langJson });
       }
       break;
     }
@@ -262,6 +313,9 @@ ${logger.bold("Commands:")}
   sessions          ${logger.dim("List your digest sessions")}
   search <query>    ${logger.dim("Search sessions by keyword")}
   report <id>       ${logger.dim("Get report for a session")}
+  chat <id> [query] ${logger.dim("Ask AI questions about a session")}
+  thumbnail <id>    ${logger.dim("Extract video frame thumbnails")}
+  translate <id>    ${logger.dim("Translate session report")}
   delete <id...>    ${logger.dim("Delete one or more sessions")}
   usage             ${logger.dim("Show usage quota and plan info")}
   share <id>        ${logger.dim("Share a session publicly")}
@@ -278,7 +332,7 @@ ${logger.bold("Commands:")}
 ${logger.bold("Options:")}
   -v, --version     Show version
   -h, --help        Show this help
-  --json            Output raw JSON (search, usage, share)
+  --json            Output raw JSON (all commands)
 
 ${logger.bold("Search Options:")}
   --limit <n>       ${logger.dim("Max results (default: 10)")}
@@ -294,9 +348,18 @@ ${logger.bold("Report Options:")}
   --frames            ${logger.dim("Inject video frames at timestamp references")}
   --visual            ${logger.dim("Trigger visual rendering for web display")}
 
-${logger.bold("Audit Options:")}
-  --verbose, -V       ${logger.dim("Show detailed findings and all usage types")}
-  --usage-type <type> ${logger.dim("Specific usage type to test (default: num_boost)")}
+${logger.bold("Chat Options:")}
+  --thread <id>     ${logger.dim("Continue existing chat thread")}
+  --model <type>    ${logger.dim("Model: free (default) or paid")}
+  --thinking        ${logger.dim("Show AI thinking process")}
+
+${logger.bold("Thumbnail Options:")}
+  --times <t1,t2>   ${logger.dim("Comma-separated seconds (default: 0,30,60,120,300)")}
+  --output <dir>    ${logger.dim("Download thumbnails to directory")}
+
+${logger.bold("Translate Options:")}
+  --to <lang>       ${logger.dim("Target language code (en, ko, ja, zh, ...)")}
+  --note-id <id>    ${logger.dim("Specific note to translate")}
 
 ${logger.bold("Delete Options:")}
   --yes, -y         ${logger.dim("Skip confirmation prompt")}
@@ -327,6 +390,10 @@ ${logger.bold("Examples:")}
   lilys usage
   lilys share 8211090
   lilys export-pdf 8211090 --output summary.pdf
+  lilys chat 8211090 "what are the key takeaways?"
+  lilys chat 8211090 --thread 3530789 "tell me more"
+  lilys thumbnail 8211090 --times 10,60,120 --output ./frames
+  lilys translate 8211090 --to en
   lilys lang ko
   lilys collections
   lilys col create "AI Research"

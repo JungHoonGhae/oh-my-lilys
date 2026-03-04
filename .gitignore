@@ -37,6 +37,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .lab/
 src/commands/audit.ts
 
+# Claude Code instructions (private)
+CLAUDE.md
+
 # Playwright CLI artifacts
 .playwright-cli/
 
