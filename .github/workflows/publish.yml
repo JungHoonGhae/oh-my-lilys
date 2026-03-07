@@ -30,12 +30,24 @@ jobs:
       - name: Type check
         run: bun run tsc
 
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Fetch NPM token
+        id: doppler
+        run: |
+          TOKEN=$(doppler secrets get NPM_TOKEN --plain)
+          echo "::add-mask::$TOKEN"
+          echo "NPM_TOKEN=$TOKEN" >> "$GITHUB_OUTPUT"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
       - name: Publish to npm
         id: npm-publish
         uses: JS-DevTools/npm-publish@v3
         continue-on-error: true
         with:
-          token: ${{ secrets.NPM_TOKEN }}
+          token: ${{ steps.doppler.outputs.NPM_TOKEN }}
           access: public
           tag: latest
 
