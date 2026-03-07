@@ -55,11 +55,25 @@ jobs:
           git tag "v${{ steps.version.outputs.version }}"
           git push origin "v${{ steps.version.outputs.version }}"
 
+      - name: Install Doppler CLI
+        if: steps.version.outputs.should_publish == 'true'
+        uses: dopplerhq/cli-action@v3
+
+      - name: Fetch NPM token
+        if: steps.version.outputs.should_publish == 'true'
+        id: doppler
+        run: |
+          TOKEN=$(doppler secrets get NPM_TOKEN --plain)
+          echo "::add-mask::$TOKEN"
+          echo "NPM_TOKEN=$TOKEN" >> "$GITHUB_OUTPUT"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
       - name: Publish to npm
         if: steps.version.outputs.should_publish == 'true'
         uses: JS-DevTools/npm-publish@v3
         with:
-          token: ${{ secrets.NPM_TOKEN }}
+          token: ${{ steps.doppler.outputs.NPM_TOKEN }}
           access: public
           tag: latest
 
