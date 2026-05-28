@@ -55,32 +55,16 @@ jobs:
           git tag "v${{ steps.version.outputs.version }}"
           git push origin "v${{ steps.version.outputs.version }}"
 
-      - name: Install Doppler CLI
+      - name: Setup Node (for OIDC-aware npm CLI)
         if: steps.version.outputs.should_publish == 'true'
-        uses: dopplerhq/cli-action@v3
-
-      - name: Fetch NPM token
-        if: steps.version.outputs.should_publish == 'true'
-        id: doppler
-        run: |
-          set -euo pipefail
-          TOKEN=$(doppler secrets get NPM_TOKEN --plain 2>/dev/null)
-          if [ -z "$TOKEN" ]; then
-            echo "::error::NPM_TOKEN not found in Doppler"
-            exit 1
-          fi
-          echo "::add-mask::$TOKEN"
-          echo "NPM_TOKEN=$TOKEN" >> "$GITHUB_OUTPUT"
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-
-      - name: Publish to npm
-        if: steps.version.outputs.should_publish == 'true'
-        uses: JS-DevTools/npm-publish@v3
+        uses: actions/setup-node@v4
         with:
-          token: ${{ steps.doppler.outputs.NPM_TOKEN }}
-          access: public
-          tag: latest
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm (OIDC trusted publishing)
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm publish --access public --tag latest --provenance
 
       - name: Create GitHub Release
         if: steps.version.outputs.should_publish == 'true'
