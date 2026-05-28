@@ -30,33 +30,16 @@ jobs:
       - name: Type check
         run: bun run tsc
 
-      - name: Install Doppler CLI
-        if: success()
-        uses: dopplerhq/cli-action@v3
-
-      - name: Fetch NPM token
-        if: success()
-        id: doppler
-        run: |
-          set -euo pipefail
-          TOKEN=$(doppler secrets get NPM_TOKEN --plain 2>/dev/null)
-          if [ -z "$TOKEN" ]; then
-            echo "::error::NPM_TOKEN not found in Doppler"
-            exit 1
-          fi
-          echo "::add-mask::$TOKEN"
-          echo "NPM_TOKEN=$TOKEN" >> "$GITHUB_OUTPUT"
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-
-      - name: Publish to npm
-        id: npm-publish
-        uses: JS-DevTools/npm-publish@v3
-        continue-on-error: true
+      - name: Setup Node (for OIDC-aware npm CLI)
+        uses: actions/setup-node@v4
         with:
-          token: ${{ steps.doppler.outputs.NPM_TOKEN }}
-          access: public
-          tag: latest
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm (OIDC trusted publishing)
+        id: npm-publish
+        continue-on-error: true
+        run: npm publish --access public --tag latest --provenance
 
       - name: Create GitHub Release
         if: always()
@@ -71,4 +54,4 @@ jobs:
       - name: Check npm publish result
         if: steps.npm-publish.outcome == 'failure'
         run: |
-          echo "::warning::npm publish failed - check NPM_TOKEN secret"
+          echo "::warning::npm publish failed — confirm trusted publisher is registered at npmjs.com for oh-my-lilys (workflow: publish.yml)"
